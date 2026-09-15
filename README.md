@@ -76,8 +76,33 @@ works; `-metric scoap` keeps the old behaviour so the two can be compared.
 
 ## Results
 
-ISCAS-85, 1000 random patterns from a 32-bit LFSR, mean of 5 seeds.
-Full table in `results/results.csv`.
+### ATPG core
+
+Pure deterministic ATPG, one targeted DALG run per fault, no random fill
+(`TPG -rtpg v0 -atpg DALG DF-nl JF-v0`). Release build, fault counts after
+checkpoint collapsing:
+
+| Circuit | Collapsed faults | Coverage | Patterns | Undetectable | Runtime |
+|---|---|---|---|---|---|
+| c17 | 22 | 100.00% | 9 | 0 | 0.01 s |
+| c432 | 544 | 98.35% | 73 | 9 | 0.04 s |
+| c499 | 594 | 98.65% | 121 | 8 | 0.53 s |
+| c880 | 994 | 99.60% | 204 | 4 | 0.97 s |
+| c1355 | 1618 | 97.53% | 162 | 40 | 3.16 s |
+| c1908 | 2056 | 97.37% | 167 | 54 | 2.66 s |
+
+"Undetectable" means DALG returned no pattern. That bucket mixes genuinely
+redundant lines with faults where the search hit the recursion cap in
+`dalg.cpp`, so it is an upper bound on real redundancy, not a proof. The cap
+exists because c6288 (the 16x16 multiplier) otherwise searches effectively
+forever.
+
+### Test point insertion
+
+Where the ATPG numbers above come from deliberate pattern generation, these come
+from random patterns — 1000 of them from a 32-bit LFSR, averaged over 5 seeds,
+which is the case test points actually exist to fix. Full table in
+`results/results.csv`, plots alongside it.
 
 <!--RESULTS-->
 
