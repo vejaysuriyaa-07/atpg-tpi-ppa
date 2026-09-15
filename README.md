@@ -104,7 +104,39 @@ from random patterns — 1000 of them from a 32-bit LFSR, averaged over 5 seeds,
 which is the case test points actually exist to fix. Full table in
 `results/results.csv`, plots alongside it.
 
-<!--RESULTS-->
+| Circuit | No points | Best | Config | Area | Delay | Gain |
+|---|---|---|---|---|---|---|
+| c432 | 98.36% | 99.87% | cp, k=4 | +6.9% | +7.7% | +1.51pp |
+| c880 | 97.50% | 99.69% | mixed, k=64 | +32.4% | +4.2% | +2.19pp |
+| c1355 | 98.12% | 98.31% | mixed, k=64 | +10.5% | +0.0% | +0.20pp |
+| c1908 | 94.56% | 95.01% | op, k=64 | +6.3% | +0.0% | +0.45pp |
+
+The gains are not uniform, and that is the actual finding. c880 and c432 respond
+well — c880 picks up 2.19 points and c432 lands at 99.87% for under 7% area.
+c1355 and c1908 barely move however much budget they get, because what is left
+undetected there is not reachable by making one line easier to drive or watch.
+
+Nor is more budget monotonically better. The worst result in the whole sweep is
+c1908 with 64 control points at **89.42%**, five points *below* leaving it alone,
+and c432 with 64 control points also drops under its baseline. Control points
+trade downstream propagation for local controllability, and past some budget the
+trade stops paying. Observe points never regress, which is why they are the safe
+default when a circuit is unfamiliar.
+
+Cheapest worthwhile insertion, per circuit — coverage gained per percent of area:
+
+| Circuit | Config | Coverage | Area | Gain |
+|---|---|---|---|---|
+| c432 | cp, k=4 | 99.87% | +6.93% | +1.51pp |
+| c880 | op, k=4 | 97.84% | +0.86% | +0.34pp |
+| c1355 | cp, k=4 | 98.27% | +2.62% | +0.16pp |
+| c1908 | cp, k=4 | 94.91% | +1.58% | +0.35pp |
+
+Plots: `results/coverage_vs_budget.png` and `results/coverage_vs_area.png`.
+The second is the one worth looking at — it puts coverage against what it cost
+rather than against a budget number, which is the only comparison that decides
+anything.
+
 
 ## PPA numbers
 

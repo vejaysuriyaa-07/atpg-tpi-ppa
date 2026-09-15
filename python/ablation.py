@@ -106,7 +106,9 @@ def main():
     for s in [1, 3, 255] + SEEDS[:3]:
         c = coverage(ckt, args.patterns, s)
         bits = bin(s).count("1")
-        note = "  <-- low Hamming weight seed" if bits <= 8 else ""
+        # Only the really sparse seeds fall over. 255 has eight set bits and
+        # is fine; 1 and 3 are not.
+        note = "  <-- too few set bits to mix" if bits <= 4 else ""
         print(f"  seed {s:<12} popcount {bits:>2}  {c:>6.2f}%{note}")
 
 

@@ -26,7 +26,18 @@ survives to an output, and the product of the two is the chance a random
 pattern detects the fault. Rank by the worse of the two stuck-at directions and
 the budget goes to the lines that are actually being missed.
 
-`-metric scoap` still selects points that way, so the comparison can be re-run.
+Head to head on c880, mixed mode, weight 3, baseline 97.50%:
+
+| budget | COP | SCOAP |
+|---|---|---|
+| 8 | 97.13 +/-0.65 | 97.80 +/-0.46 |
+| 16 | **98.79** +/-0.32 | 98.05 +/-0.45 |
+| 32 | **99.63** +/-0.05 | 98.33 +/-0.51 |
+| 64 | **99.69** +/-0.10 | 98.68 +/-0.40 |
+
+At a budget of 8 SCOAP is actually ahead, and both sit within noise of doing
+nothing. The separation opens up once there are enough points to matter, and by
+32 it is 1.3 points. `-metric scoap` keeps the old ranking so this can be re-run.
 
 ## 2. Control points need a weighted enable
 
@@ -41,16 +52,38 @@ everything behind it gets harder to test, and on c880 the net effect was a
 *loss* against the baseline.
 
 Gating the enable through a small tree of `weight` pins -- OR for control-0, AND
-for control-1 -- drops the activation rate to 2^-weight. At weight 3 the point
-fires one time in eight, which is often enough to break the stuck line and rare
-enough to leave normal propagation intact. That is the default. Past about 4 the
-point stops firing often enough to matter and the gain flattens out.
+for control-1 -- drops the activation rate to 2^-weight. c880, 32 control points,
+baseline 97.50%:
+
+| weight | fires | coverage |
+|---|---|---|
+| 1 | 1/2 | 94.52 +/-0.47 — *worse than no points* |
+| 2 | 1/4 | 98.10 +/-0.44 |
+| 3 | 1/8 | **98.58** +/-0.22 |
+| 4 | 1/16 | 98.03 +/-0.30 |
+| 5 | 1/32 | 97.10 +/-0.37 — *worse than no points* |
+
+It is a proper curve with a peak, and both ends of it lose to the untouched
+circuit. Too eager and the point spends its time blocking real patterns; too
+timid and it never fires when it is needed. One in eight is the default.
 
 ## 3. The seeds have to be spread out
 
 Worth knowing before reading any BIST coverage number, including the ones in the
-README: on c880, seed 1 gives **14%** coverage where a well-mixed seed gives
-**97%**.
+README:
+
+| seed | set bits | coverage |
+|---|---|---|
+| 1 | 1 | **14.26%** |
+| 3 | 2 | **14.26%** |
+| 255 | 8 | 96.76% |
+| 2654435761 | 19 | 98.30% |
+| 1013904226 | 18 | 96.48% |
+| 3668339987 | 17 | 97.50% |
+
+It is only the very sparse seeds that fall over -- 255 has eight set bits and is
+perfectly fine. But seed 1 loses 83 points of coverage against seed 255 on the
+same circuit with the same pattern count.
 
 Nothing is wrong with the LFSR. A seed of 1 is a single set bit, and c880 has 60
 inputs against a 32-bit LFSR, so the early patterns are nearly all zeros and
@@ -74,7 +107,10 @@ means `weight` new input pins and two gates per point. Against that, it is the
 only thing that fixes a line random patterns cannot drive at all.
 
 Which one wins depends on the circuit, and the sweep shows both cases. On c880
-observe points give more coverage per unit of area; on c432 control points do.
+observe points give the best coverage per unit of area (+0.34pp for 0.86%); on
+c432 control points do (+1.51pp for 6.93%). The sweep also has the failure mode:
+c1908 with 64 control points lands at 89.42% against a 94.56% baseline, over five
+points *down*. No observe-point configuration in the sweep ever regressed.
 `-mode mixed` decides per node by comparing the two probabilities, with a `-bias`
 factor tilting the comparison toward observe points to pay for the asymmetry
 above.
