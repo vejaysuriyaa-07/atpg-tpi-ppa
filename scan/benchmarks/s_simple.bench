@@ -1,0 +1,16 @@
+# s_simple - 3-stage pipeline with combinational output logic
+# 3 primary inputs, 2 primary outputs, 3 flip-flops
+INPUT(IN0)
+INPUT(IN1)
+INPUT(IN2)
+OUTPUT(OUT0)
+OUTPUT(OUT1)
+FF0 = DFF(D0)
+FF1 = DFF(FF0)
+FF2 = DFF(FF1)
+D0 = AND(IN0, IN1)
+G0 = XOR(FF0, FF2)
+G1 = OR(G0, IN2)
+G2 = NAND(FF1, FF2)
+OUT0 = AND(G1, G2)
+OUT1 = XOR(FF2, IN2)

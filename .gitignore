@@ -1,0 +1,39 @@
+# Build output
+build/
+bist/build/
+scan/build/
+*.o
+*.out
+simulator
+
+# Test outputs
+*.tp
+*.fp
+auto-tests*/
+outputs/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Sweep artefacts. results.csv, efficiency.csv and the plots are checked in as
+# the evidence behind the README; the generated netlists are not -- they are
+# large, numerous and rebuilt by python/sweep.py in seconds.
+results/netlists/
+results/ablation/
