@@ -268,8 +268,18 @@ int testPointInsertion_impl(Simulator &simulator) {
 
   // Hardest to detect first. That ordering is the whole point: these are the
   // lines random patterns keep missing, and they are what the budget buys.
+  //
+  // Plenty of lines tie on detection probability -- symmetric logic gives whole
+  // groups the same number -- and std::sort is not stable, so without the line
+  // number as a second key the winners depend on the standard library. That is
+  // how the same budget on the same circuit selected a different mix under
+  // libc++ than under libstdc++.
   std::sort(cands.begin(), cands.end(),
-            [](const Candidate &a, const Candidate &b) { return a.detect < b.detect; });
+            [](const Candidate &a, const Candidate &b) {
+              if (a.detect != b.detect)
+                return a.detect < b.detect;
+              return a.id < b.id;
+            });
 
   // Two points sitting next to each other mostly fix the same faults, so once
   // a node is taken its immediate neighbours are off the table.

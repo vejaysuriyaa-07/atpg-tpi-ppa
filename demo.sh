@@ -26,6 +26,15 @@ pause() {
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
+# nproc is coreutils, which macOS does not ship.
+if command -v nproc > /dev/null; then
+  JOBS=$(nproc)
+elif command -v sysctl > /dev/null; then
+  JOBS=$(sysctl -n hw.ncpu)
+else
+  JOBS=4
+fi
+
 cov() {  # cov <netlist> <patterns> <seed>
   ./bist/build/bist-simulator "$1" -n "$2" -seed "$3" \
     | awk '/Fault Coverage/ {print $3}'
@@ -33,11 +42,11 @@ cov() {  # cov <netlist> <patterns> <seed>
 
 step "1. Build"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release > /dev/null
-cmake --build build -j"$(nproc)" > /dev/null
+cmake --build build -j"$JOBS" > /dev/null
 cmake -S bist -B bist/build -DCMAKE_BUILD_TYPE=Release > /dev/null
-cmake --build bist/build -j"$(nproc)" > /dev/null
+cmake --build bist/build -j"$JOBS" > /dev/null
 cmake -S scan -B scan/build -DCMAKE_BUILD_TYPE=Release > /dev/null
-cmake --build scan/build -j"$(nproc)" > /dev/null
+cmake --build scan/build -j"$JOBS" > /dev/null
 echo "simulator, bist-simulator, scan-simulator, unit_tests built"
 pause
 

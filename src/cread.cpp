@@ -264,7 +264,7 @@ int cread_impl(Simulator &simulator) {
     linkFanouts(simulator.getNodes());
 
     simulator.setGlobalState(State::CKTLD);
-    std::cout << "==> OK";
+    std::cout << "==> OK\n";
     return 1;
 }
 } // namespace logicsim
