@@ -107,21 +107,21 @@ which is the case test points actually exist to fix. Full table in
 | Circuit | No points | Best | Config | Area | Delay | Gain |
 |---|---|---|---|---|---|---|
 | c432 | 98.36% | 99.87% | cp, k=4 | +6.9% | +7.7% | +1.51pp |
-| c880 | 97.50% | 99.69% | mixed, k=64 | +32.4% | +4.2% | +2.19pp |
-| c1355 | 98.12% | 98.31% | mixed, k=64 | +10.5% | +0.0% | +0.20pp |
-| c1908 | 94.56% | 95.01% | op, k=64 | +6.3% | +0.0% | +0.45pp |
+| c880 | 97.50% | 99.39% | cp, k=64 | +54.9% | +21.7% | +1.89pp |
+| c1355 | 98.12% | 98.46% | cp, k=32 | +21.0% | +15.2% | +0.34pp |
+| c1908 | 94.56% | 94.97% | op, k=64 | +6.3% | +0.0% | +0.41pp |
 
 The gains are not uniform, and that is the actual finding. c880 and c432 respond
-well — c880 picks up 2.19 points and c432 lands at 99.87% for under 7% area.
-c1355 and c1908 barely move however much budget they get, because what is left
-undetected there is not reachable by making one line easier to drive or watch.
+well. c1355 and c1908 barely move however much budget they get, because what is
+left undetected there is not reachable by making one line easier to drive or
+watch.
 
 Nor is more budget monotonically better. The worst result in the whole sweep is
-c1908 with 64 control points at **89.42%**, five points *below* leaving it alone,
-and c432 with 64 control points also drops under its baseline. Control points
-trade downstream propagation for local controllability, and past some budget the
-trade stops paying. Observe points never regress, which is why they are the safe
-default when a circuit is unfamiliar.
+c1908 with 64 control points at **90.45%**, 4.11 points *below*
+leaving it alone. Control points trade downstream propagation for local
+controllability, and past some budget the trade stops paying. Observe points
+never regress, which is why they are the safe default when a circuit is
+unfamiliar.
 
 Cheapest worthwhile insertion, per circuit — coverage gained per percent of area:
 
@@ -129,14 +129,17 @@ Cheapest worthwhile insertion, per circuit — coverage gained per percent of ar
 |---|---|---|---|---|
 | c432 | cp, k=4 | 99.87% | +6.93% | +1.51pp |
 | c880 | op, k=4 | 97.84% | +0.86% | +0.34pp |
-| c1355 | cp, k=4 | 98.27% | +2.62% | +0.16pp |
-| c1908 | cp, k=4 | 94.91% | +1.58% | +0.35pp |
+| c1355 | cp, k=8 | 98.35% | +5.24% | +0.24pp |
+| c1908 | mixed, k=8 | 94.62% | +0.79% | +0.06pp |
 
 Plots: `results/coverage_vs_budget.png` and `results/coverage_vs_area.png`.
 The second is the one worth looking at — it puts coverage against what it cost
 rather than against a budget number, which is the only comparison that decides
 anything.
 
+Every number here is reproducible: `python/sweep.py` fixes its LFSR seeds, and
+the point selection is deterministic across compilers (see the note on sort
+ordering in docs/metrics.md).
 
 ## PPA numbers
 

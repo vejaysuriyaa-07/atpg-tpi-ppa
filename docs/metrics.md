@@ -1,8 +1,10 @@
 # Why the inserter works the way it does
 
-Three things in `src/tpi.cpp` look arbitrary until you see what they were
-measured against. All the numbers here come from `python/ablation.py` on c880,
-1000 patterns, averaged over 5 LFSR seeds, and can be regenerated with:
+Several things in `src/tpi.cpp` look arbitrary until you see what they were
+measured against. The first three sections below are the design choices, the
+last two are results worth knowing before reading any coverage number in this
+repository. All of it comes from `python/ablation.py` on c880, 1000 patterns,
+averaged over 5 LFSR seeds, and can be regenerated with:
 
     python3 python/ablation.py --circuit c880
 
@@ -31,13 +33,13 @@ Head to head on c880, mixed mode, weight 3, baseline 97.50%:
 | budget | COP | SCOAP |
 |---|---|---|
 | 8 | 97.13 +/-0.65 | 97.80 +/-0.46 |
-| 16 | **98.79** +/-0.32 | 98.05 +/-0.45 |
-| 32 | **99.63** +/-0.05 | 98.33 +/-0.51 |
-| 64 | **99.69** +/-0.10 | 98.68 +/-0.40 |
+| 16 | **98.40** +/-0.40 | 98.05 +/-0.45 |
+| 32 | **99.26** +/-0.20 | 98.33 +/-0.51 |
+| 64 | **99.35** +/-0.21 | 98.68 +/-0.40 |
 
 At a budget of 8 SCOAP is actually ahead, and both sit within noise of doing
 nothing. The separation opens up once there are enough points to matter, and by
-32 it is 1.3 points. `-metric scoap` keeps the old ranking so this can be re-run.
+32 it is nearly a point. `-metric scoap` keeps the old ranking so this can be re-run.
 
 ## 2. Control points need a weighted enable
 
@@ -57,15 +59,16 @@ baseline 97.50%:
 
 | weight | fires | coverage |
 |---|---|---|
-| 1 | 1/2 | 94.52 +/-0.47 — *worse than no points* |
-| 2 | 1/4 | 98.10 +/-0.44 |
-| 3 | 1/8 | **98.58** +/-0.22 |
-| 4 | 1/16 | 98.03 +/-0.30 |
-| 5 | 1/32 | 97.10 +/-0.37 — *worse than no points* |
+| 1 | 1/2 | 94.18 +/-0.53 — *worse than no points* |
+| 2 | 1/4 | 97.92 +/-0.65 |
+| 3 | 1/8 | **98.94** +/-0.21 |
+| 4 | 1/16 | 98.34 +/-0.49 |
+| 5 | 1/32 | 97.61 +/-0.36 |
 
-It is a proper curve with a peak, and both ends of it lose to the untouched
-circuit. Too eager and the point spends its time blocking real patterns; too
-timid and it never fires when it is needed. One in eight is the default.
+It is a proper curve with a peak. Too eager and the point spends its time
+blocking real patterns, which is bad enough at weight 1 to lose three points
+against doing nothing at all; too timid and it stops firing when it is needed
+and the gain decays back toward the baseline. One in eight is the default.
 
 ## 3. The seeds have to be spread out
 
@@ -109,7 +112,7 @@ only thing that fixes a line random patterns cannot drive at all.
 Which one wins depends on the circuit, and the sweep shows both cases. On c880
 observe points give the best coverage per unit of area (+0.34pp for 0.86%); on
 c432 control points do (+1.51pp for 6.93%). The sweep also has the failure mode:
-c1908 with 64 control points lands at 89.42% against a 94.56% baseline, over five
+c1908 with 64 control points lands at 90.45% against a 94.56% baseline, four
 points *down*. No observe-point configuration in the sweep ever regressed.
 `-mode mixed` decides per node by comparing the two probabilities, with a `-bias`
 factor tilting the comparison toward observe points to pay for the asymmetry
@@ -131,3 +134,20 @@ scaled off Nangate 45nm X1 cells. No synthesis has run. In particular:
 `PpaModel::loadFromFile` replaces the cell table with numbers parsed from a real
 Genus report (`tools/parse_genus.py`), which fixes the first two. Congestion and
 wirelength need Innovus and are not addressed here.
+
+## 5. Determinism across toolchains
+
+Worth recording because it was not obvious. The same command on the same circuit
+selected a different set of test points on macOS than on Linux -- the same
+*number* of points and the same area, but different lines, and coverage a few
+tenths apart.
+
+Nothing random is involved. Lines tie on detection probability constantly;
+symmetric logic hands whole groups the same value. `std::sort` is not stable, so
+within a tied group the winners came down to whether libc++ or libstdc++ was
+doing the sorting. Adding the line number as a second sort key pins the order
+everywhere, and the two platforms now produce byte-identical netlists.
+
+The numbers in this file and in the README were regenerated after that fix. They
+are what the current code produces; the earlier ones were what an unstable sort
+happened to pick on one machine.
